@@ -4,8 +4,17 @@ import { Send, MessageCircle } from 'lucide-react'
 import { useStore } from '@/components/providers'
 import { Logo } from '@/components/logo'
 
+const defaultLinks = {
+  telegramLanding: '#',
+  whatsappLanding: '#',
+  telegramPartner: '#',
+  whatsappPartner: '#',
+}
+
 export function Footer() {
-  const { lang, contactLinks } = useStore()
+  const { lang } = useStore()
+  const store = useStore() as any
+  const contactLinks = store.contactLinks ?? defaultLinks
 
   return (
     <footer className="border-t border-border/60 px-4 py-12 sm:px-6">
