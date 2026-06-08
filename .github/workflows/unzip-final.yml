@@ -1,0 +1,21 @@
+name: Unzip Final Project
+on: push
+permissions:
+  contents: write
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Unzip and replace
+        run: |
+          if [ -f arabaawy-final.zip ]; then
+            unzip -o arabaawy-final.zip -d tmp_extract
+            cp -r tmp_extract/arabaawy-final/. .
+            rm -rf tmp_extract arabaawy-final.zip 2>/dev/null || true
+          fi
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add .
+          git commit -m "Extracted final project" || echo "Nothing to commit"
+          git push
