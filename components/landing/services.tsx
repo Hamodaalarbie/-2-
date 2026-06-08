@@ -1,14 +1,29 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { motion } from 'motion/react'
 import * as Icons from 'lucide-react'
 import { useStore } from '@/components/providers'
+import { createClient } from '@/lib/supabase/client'
 import type { LucideIcon } from 'lucide-react'
+import type { Service } from '@/lib/types'
 
 export function Services() {
-  const { lang, services } = useStore()
-  const active = services.filter((s) => s.active).sort((a, b) => a.order - b.order)
+  const { lang } = useStore()
+  const [services, setServices] = useState<Service[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase
+      .from('services')
+      .select('*')
+      .eq('active', true)
+      .order('order', { ascending: true })
+      .then(({ data }) => {
+        if (data) setServices(data)
+      })
+  }, [])
 
   return (
     <section className="px-4 py-16 sm:px-6" id="services">
@@ -25,7 +40,7 @@ export function Services() {
         </p>
 
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {active.map((s, i) => {
+          {services.map((s, i) => {
             const Icon = (Icons[s.icon as keyof typeof Icons] ??
               Icons.Sparkles) as LucideIcon
             return (
