@@ -47,8 +47,10 @@ interface StoreValue {
   products: any[]
   levels: any[]
   users: any[]
+  departments: any[]
   content: SiteContent
   contactLinks: ContactLinks
+  submitPartnerRequest: (data: any) => Promise<void>
 }
 
 const defaultContent: SiteContent = {
@@ -69,7 +71,9 @@ const StoreContext = createContext<StoreValue>({
   login: async () => null, loginAdmin: async () => false,
   logout: () => {}, setUser: () => {}, refreshUser: async () => {},
   projects: [], services: [], shares: [], products: [],
-  levels: [], users: [], content: defaultContent, contactLinks: defaultLinks,
+  levels: [], users: [], departments: [],
+  content: defaultContent, contactLinks: defaultLinks,
+  submitPartnerRequest: async () => {},
 })
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -82,6 +86,7 @@ export function Providers({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<any[]>([])
   const [levels, setLevels] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
+  const [departments, setDepartments] = useState<any[]>([])
   const [content, setContent] = useState<SiteContent>(defaultContent)
   const [contactLinks, setContactLinks] = useState<ContactLinks>(defaultLinks)
 
@@ -109,6 +114,7 @@ export function Providers({ children }: { children: ReactNode }) {
     supabase.from('financial_products').select('*').then(({ data }) => { if (data) setProducts(data) })
     supabase.from('levels').select('*').then(({ data }) => { if (data) setLevels(data) })
     supabase.from('users').select('*').then(({ data }) => { if (data) setUsers(data) })
+    supabase.from('departments').select('*').then(({ data }) => { if (data) setDepartments(data) })
     supabase.from('site_content').select('*').single().then(({ data }) => { if (data) setContent(data) })
     supabase.from('contact_links').select('*').single().then(({ data }) => { if (data) setContactLinks(data) })
   }, [])
@@ -166,12 +172,17 @@ export function Providers({ children }: { children: ReactNode }) {
     if (data) setUser(data)
   }, [user])
 
+  const submitPartnerRequest = async (data: any) => {
+    const supabase = createClient()
+    await supabase.from('partner_requests').insert([data])
+  }
+
   return (
     <StoreContext.Provider value={{
       lang, theme, user, toggleLang, toggleTheme,
       login, loginAdmin, logout, setUser, refreshUser,
-      projects, services, shares, products, levels, users,
-      content, contactLinks,
+      projects, services, shares, products, levels, users, departments,
+      content, contactLinks, submitPartnerRequest,
     }}>
       {children}
     </StoreContext.Provider>
