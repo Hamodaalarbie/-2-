@@ -4,6 +4,7 @@ import {
   createContext, useContext, useState, useEffect, useCallback, type ReactNode
 } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import type { ContactLinks, SiteContent } from '@/lib/types'
 
 type Lang = 'ar' | 'en'
 type Theme = 'dark' | 'light'
@@ -40,25 +41,49 @@ interface StoreValue {
   logout: () => void
   setUser: (u: User | null) => void
   refreshUser: () => Promise<void>
+  projects: any[]
+  services: any[]
+  shares: any[]
+  products: any[]
+  levels: any[]
+  users: any[]
+  content: SiteContent
+  contactLinks: ContactLinks
+}
+
+const defaultContent: SiteContent = {
+  welcomeAr: '', welcomeEn: '',
+  heroTitleAr: '', heroTitleEn: '',
+  heroSubAr: '', heroSubEn: '',
+  clientPortalAr: '', clientPortalEn: '',
+}
+
+const defaultLinks: ContactLinks = {
+  telegramPartner: '#', telegramLanding: '#',
+  whatsappPartner: '#', whatsappLanding: '#',
 }
 
 const StoreContext = createContext<StoreValue>({
-  lang: 'ar',
-  theme: 'dark',
-  user: null,
-  toggleLang: () => {},
-  toggleTheme: () => {},
-  login: async () => null,
-  loginAdmin: async () => false,
-  logout: () => {},
-  setUser: () => {},
-  refreshUser: async () => {},
+  lang: 'ar', theme: 'dark', user: null,
+  toggleLang: () => {}, toggleTheme: () => {},
+  login: async () => null, loginAdmin: async () => false,
+  logout: () => {}, setUser: () => {}, refreshUser: async () => {},
+  projects: [], services: [], shares: [], products: [],
+  levels: [], users: [], content: defaultContent, contactLinks: defaultLinks,
 })
 
 export function Providers({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('ar')
   const [theme, setTheme] = useState<Theme>('dark')
   const [user, setUserState] = useState<User | null>(null)
+  const [projects, setProjects] = useState<any[]>([])
+  const [services, setServices] = useState<any[]>([])
+  const [shares, setShares] = useState<any[]>([])
+  const [products, setProducts] = useState<any[]>([])
+  const [levels, setLevels] = useState<any[]>([])
+  const [users, setUsers] = useState<any[]>([])
+  const [content, setContent] = useState<SiteContent>(defaultContent)
+  const [contactLinks, setContactLinks] = useState<ContactLinks>(defaultLinks)
 
   useEffect(() => {
     try {
@@ -75,6 +100,18 @@ export function Providers({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle('dark', theme === 'dark')
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
   }, [theme, lang])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('projects').select('*').then(({ data }) => { if (data) setProjects(data) })
+    supabase.from('services').select('*').then(({ data }) => { if (data) setServices(data) })
+    supabase.from('shares').select('*').then(({ data }) => { if (data) setShares(data) })
+    supabase.from('financial_products').select('*').then(({ data }) => { if (data) setProducts(data) })
+    supabase.from('levels').select('*').then(({ data }) => { if (data) setLevels(data) })
+    supabase.from('users').select('*').then(({ data }) => { if (data) setUsers(data) })
+    supabase.from('site_content').select('*').single().then(({ data }) => { if (data) setContent(data) })
+    supabase.from('contact_links').select('*').single().then(({ data }) => { if (data) setContactLinks(data) })
+  }, [])
 
   const setUser = (u: User | null) => {
     setUserState(u)
@@ -96,13 +133,10 @@ export function Providers({ children }: { children: ReactNode }) {
 
   const login = async (code: string, password: string): Promise<User | null> => {
     const supabase = createClient()
-    const { data } = await supabase
-      .from('users')
-      .select('*')
+    const { data } = await supabase.from('users').select('*')
       .eq('code', code.trim().toUpperCase())
       .eq('password', password.trim())
-      .neq('role', 'admin')
-      .single()
+      .neq('role', 'admin').single()
     if (!data) return null
     if (data.status !== 'active') return null
     setUser(data)
@@ -111,13 +145,10 @@ export function Providers({ children }: { children: ReactNode }) {
 
   const loginAdmin = async (code: string, password: string): Promise<boolean> => {
     const supabase = createClient()
-    const { data } = await supabase
-      .from('users')
-      .select('*')
+    const { data } = await supabase.from('users').select('*')
       .eq('code', code.trim().toUpperCase())
       .eq('password', password.trim())
-      .eq('role', 'admin')
-      .single()
+      .eq('role', 'admin').single()
     if (!data) return false
     setUser(data)
     return true
@@ -135,9 +166,13 @@ export function Providers({ children }: { children: ReactNode }) {
     if (data) setUser(data)
   }, [user])
 
-
   return (
-    <StoreContext.Provider value={{ lang, theme, user, toggleLang, toggleTheme, login, loginAdmin, logout, setUser, refreshUser }}>
+    <StoreContext.Provider value={{
+      lang, theme, user, toggleLang, toggleTheme,
+      login, loginAdmin, logout, setUser, refreshUser,
+      projects, services, shares, products, levels, users,
+      content, contactLinks,
+    }}>
       {children}
     </StoreContext.Provider>
   )
