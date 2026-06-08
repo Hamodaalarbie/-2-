@@ -1,12 +1,39 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import * as Icons from 'lucide-react'
 import { useStore } from '@/components/providers'
+import { createClient } from '@/lib/supabase/client'
 import type { LucideIcon } from 'lucide-react'
+import type { Level, SiteContent } from '@/lib/types'
+
+const defaultContent: SiteContent = {
+  welcomeAr: '',
+  welcomeEn: '',
+  heroTitleAr: '',
+  heroTitleEn: '',
+  heroSubAr: '',
+  heroSubEn: '',
+  clientPortalAr: '',
+  clientPortalEn: '',
+}
 
 export function WelcomeLevels() {
-  const { lang, levels, content } = useStore()
+  const { lang } = useStore()
+  const [levels, setLevels] = useState<Level[]>([])
+  const [content, setContent] = useState<SiteContent>(defaultContent)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('levels').select('*').then(({ data }) => {
+      if (data) setLevels(data)
+    })
+    supabase.from('site_content').select('*').single().then(({ data }) => {
+      if (data) setContent(data)
+    })
+  }, [])
+
   const sorted = [...levels].sort((a, b) => a.minPoints - b.minPoints)
 
   return (
