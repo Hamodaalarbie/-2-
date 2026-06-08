@@ -1,14 +1,27 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { Sparkles, AlertTriangle } from 'lucide-react'
 import { useStore } from '@/components/providers'
+import { createClient } from '@/lib/supabase/client'
 import { ShareCard } from '@/components/share-card'
+import type { Share, FinancialProduct } from '@/lib/types'
 
 export function Shares() {
-  const { lang, shares, products } = useStore()
-  const published = shares.filter((s) => s.published)
-  const activeProducts = products.filter((p) => p.active)
+  const { lang } = useStore()
+  const [shares, setShares] = useState<Share[]>([])
+  const [products, setProducts] = useState<FinancialProduct[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('shares').select('*').eq('published', true).then(({ data }) => {
+      if (data) setShares(data)
+    })
+    supabase.from('financial_products').select('*').eq('active', true).then(({ data }) => {
+      if (data) setProducts(data)
+    })
+  }, [])
 
   return (
     <section className="px-4 py-16 sm:px-6" id="shares">
@@ -25,7 +38,7 @@ export function Shares() {
         </p>
 
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {published.map((s) => (
+          {shares.map((s) => (
             <ShareCard key={s.id} share={s} />
           ))}
         </div>
@@ -36,7 +49,7 @@ export function Shares() {
           </span>
         </h3>
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {activeProducts.map((p, i) => (
+          {products.map((p, i) => (
             <motion.div
               key={p.id}
               initial={{ opacity: 0, y: 30 }}
