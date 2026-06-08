@@ -78,3 +78,4 @@ export function Logo({ size = 'md', scheme = 'default', showEn = true }: LogoPro
     </div>
   )
 }
+export default Logo
