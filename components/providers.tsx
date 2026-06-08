@@ -135,6 +135,7 @@ export function Providers({ children }: { children: ReactNode }) {
     if (data) setUser(data)
   }, [user])
 
+
   return (
     <StoreContext.Provider value={{ lang, theme, user, toggleLang, toggleTheme, login, loginAdmin, logout, setUser, refreshUser }}>
       {children}
