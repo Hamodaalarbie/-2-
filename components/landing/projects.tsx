@@ -1,13 +1,23 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { motion } from 'motion/react'
 import { Users } from 'lucide-react'
 import { useStore } from '@/components/providers'
+import { createClient } from '@/lib/supabase/client'
+import type { Project } from '@/lib/types'
 
 export function Projects() {
-  const { lang, projects } = useStore()
-  const active = projects.filter((p) => p.active)
+  const { lang } = useStore()
+  const [projects, setProjects] = useState<Project[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('projects').select('*').eq('active', true).then(({ data }) => {
+      if (data) setProjects(data)
+    })
+  }, [])
 
   return (
     <section className="px-4 py-16 sm:px-6" id="projects">
@@ -24,7 +34,7 @@ export function Projects() {
         </p>
 
         <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {active.map((p, i) => (
+          {projects.map((p, i) => (
             <motion.div
               key={p.id}
               initial={{ opacity: 0, y: 30 }}
