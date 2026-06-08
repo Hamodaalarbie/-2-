@@ -1,16 +1,53 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { ArrowLeft, Send, TrendingUp, Users, Wallet } from 'lucide-react'
 import { useStore } from '@/components/providers'
+import { createClient } from '@/lib/supabase/client'
+import type { SiteContent, ContactLinks } from '@/lib/types'
 
 interface HeroProps {
   onInvestor: () => void
   onPartner: () => void
 }
 
+const defaultContent: SiteContent = {
+  welcomeAr: '',
+  welcomeEn: '',
+  heroTitleAr: '',
+  heroTitleEn: '',
+  heroSubAr: '',
+  heroSubEn: '',
+  clientPortalAr: '',
+  clientPortalEn: '',
+}
+
+const defaultLinks: ContactLinks = {
+  telegramPartner: '#',
+  telegramLanding: '#',
+  whatsappPartner: '#',
+  whatsappLanding: '#',
+}
+
 export function Hero({ onInvestor, onPartner }: HeroProps) {
-  const { lang, content, contactLinks, projects, users } = useStore()
+  const { lang } = useStore()
+  const [content, setContent] = useState<SiteContent>(defaultContent)
+  const [contactLinks, setContactLinks] = useState<ContactLinks>(defaultLinks)
+  const [projectsCount, setProjectsCount] = useState(0)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('site_content').select('*').single().then(({ data }) => {
+      if (data) setContent(data)
+    })
+    supabase.from('contact_links').select('*').single().then(({ data }) => {
+      if (data) setContactLinks(data)
+    })
+    supabase.from('projects').select('id', { count: 'exact', head: true }).then(({ count }) => {
+      if (count) setProjectsCount(count)
+    })
+  }, [])
 
   const stats = [
     {
@@ -20,7 +57,7 @@ export function Hero({ onInvestor, onPartner }: HeroProps) {
     },
     {
       icon: TrendingUp,
-      value: `${projects.length * 4}+`,
+      value: `${projectsCount * 4}+`,
       label: lang === 'ar' ? 'مشروع ناجح' : 'Successful Projects',
     },
     {
@@ -32,7 +69,6 @@ export function Hero({ onInvestor, onPartner }: HeroProps) {
 
   return (
     <section className="relative overflow-hidden px-4 pb-20 pt-32 sm:px-6 sm:pt-40">
-      {/* orbs */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -right-20 top-10 size-72 rounded-full bg-[#1e90ff]/15 blur-3xl" />
         <div className="absolute -left-20 top-40 size-72 rounded-full bg-[#00c6ff]/10 blur-3xl" />
